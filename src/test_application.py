@@ -1,7 +1,7 @@
 from patient import Patient
 import requests
 
-patient1 = Patient("Fahad", "Male", 25)
+patient1 = Patient("Fahad", 25, "Male")
 
 uri = "http://127.0.0.1:5000"
 

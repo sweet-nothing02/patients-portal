@@ -35,14 +35,11 @@ class PatientAPIController:
 
     def create_patient(self):
         data = request.json
+        patient_id = self.patient_db.insert_patient(data)
         if not data:
             return jsonify({"error": "No data provided"}), 400
         try:
-            new_patient = Patient(data['name'], data['age'], data['gender'])
-            new_patient.update_room_and_ward(data['ward'], data['room'])
-            new_patient.commit_to_database(self)
-
-            return jsonify({"message": "Patient created successfully"}), 201
+            return jsonify({"patient_id": patient_id}), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 400
 

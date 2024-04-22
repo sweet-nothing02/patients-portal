@@ -19,48 +19,66 @@ There should be a method to commit that patient to the database using the api_co
 
 import uuid
 from datetime import datetime
+from config import *
+import requests
+
 from config import GENDERS, WARD_NUMBERS, ROOM_NUMBERS
-from patient_db_config import PATIENT_ID_COLUMN, PATIENT_NAME_COLUMN, PATIENT_AGE_COLUMN, PATIENT_GENDER_COLUMN, \
-    PATIENT_ROOM_COLUMN, PATIENT_WARD_COLUMN
-# from api_controller import PatientAPIController
+from patient_db_config import *
 
 class Patient:
     def __init__(self, name, age, gender):
-        self.id = str(uuid.uuid4())
-        self.name = name
-        self.age = age
-        self.gender = gender
-        self.checkin = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.checkout = None
-        self.ward = None
-        self.room = None
+        self.patient_id = str(uuid.uuid4())
+        self.patient_name = name
+        self.patient_age = age
+        self.patient_gender = gender
+        self.patient_checkin = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.patient_checkout = None
+        self.patient_ward = None
+        self.patient_room = None
 
-    def update_room_and_ward(self, ward, room):
+    def get_id(self):
+        return self.patient_id
+
+    def get_name(self):
+        return self.patient_name
+
+    def get_room(self):
+        return self.patient_room
+
+    def get_ward(self):
+        return self.patient_ward
+
+    def set_room(self, room):
+        list = []
+        for x in WARD_NUMBERS:
+            for y in range(10):
+                list.append(x * 10 + y)
+        if room in list:
+            self.patient_room = room
+        else:
+            raise ValueError("Invalid room number")
+
+    def set_ward(self, ward):
         if ward not in WARD_NUMBERS:
             raise ValueError("Invalid ward number")
-        if room not in ROOM_NUMBERS.get(ward, []):
-            raise ValueError("Invalid room number")
-        self.ward = ward
-        self.room = room
+        self.patient_ward = ward
 
-    def commit_to_database(self, patientAPIController):
-        # Validate patient attributes
-        if self.gender not in GENDERS:
+    def commit(self):
+        if self.patient_gender not in GENDERS:
             raise ValueError("Invalid gender")
-        if not (0 < self.age < 150):
+        if not (0 < self.patient_age < 150):
             raise ValueError("Invalid age")
-        
-        # Create a dictionary representing the patient data
+
         patient_data = {
-            PATIENT_ID_COLUMN: self.id,
-            PATIENT_NAME_COLUMN: self.name,
-            PATIENT_AGE_COLUMN: self.age,
-            PATIENT_GENDER_COLUMN: self.gender,
-            PATIENT_WARD_COLUMN: self.ward,
-            PATIENT_ROOM_COLUMN: self.room,
+            PATIENT_NAME_COLUMN: self.patient_name,
+            PATIENT_AGE_COLUMN: self.patient_age,
+            PATIENT_GENDER_COLUMN: self.patient_gender,
+            PATIENT_WARD_COLUMN: self.patient_ward,
+            PATIENT_ROOM_COLUMN: self.patient_room,
         }
 
-        # Use the API controller to commit the patient data to the database
-
-        patientAPIController.patient_db.insert_patient(patient_data)
-
+        response = requests.post(f"{API_CONTROLLER_URL}/patients", json=patient_data)
+        if response.status_code == 200:
+            response_data = response.json()
+        else:
+            print("An error occurred while committing patient data to the database.")
